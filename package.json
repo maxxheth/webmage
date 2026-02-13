@@ -1,0 +1,45 @@
+{
+	"name": "webmage",
+	"version": "1.0.0",
+	"description": "Agentic SEO village with onsite and offsite teams powered by Ollama Cloud",
+	"type": "module",
+	"scripts": {
+		"build": "tsc",
+		"typecheck": "tsc --noEmit",
+		"pipeline:onsite": "tsx src/cli/run-onsite-pipeline.ts",
+		"pipeline:onsite:dry": "tsx src/cli/run-onsite-pipeline.ts --dry-run",
+		"pipeline:offsite": "tsx src/cli/run-offsite-pipeline.ts",
+		"pipeline:offsite:dry": "tsx src/cli/run-offsite-pipeline.ts --dry-run",
+		"pipeline:village": "tsx src/cli/run-village.ts",
+		"pipeline:village:dry": "tsx src/cli/run-village.ts --dry-run",
+		"pipeline:haro": "tsx src/cli/run-haro-pipeline.ts",
+		"pipeline:haro:dry": "tsx src/cli/run-haro-pipeline.ts --dry-run"
+	},
+	"keywords": [
+		"seo",
+		"wordpress",
+		"ollama",
+		"agentic",
+		"content-generation",
+		"ai"
+	],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@google/genai": "^1.41.0",
+		"axios": "^1.7.0",
+		"dotenv": "^16.4.0",
+		"form-data": "^4.0.0",
+		"imapflow": "^1.2.9",
+		"mailparser": "^3.9.3",
+		"ollama": "^0.5.0",
+		"zod": "^3.23.0",
+		"zod-to-json-schema": "^3.24.0"
+	},
+	"devDependencies": {
+		"@types/mailparser": "^3.4.6",
+		"@types/node": "^22.0.0",
+		"tsx": "^4.19.0",
+		"typescript": "^5.6.0"
+	}
+}

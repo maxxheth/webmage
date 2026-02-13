@@ -1,0 +1,8 @@
+node_modules
+dist
+logs
+output
+.env
+.git
+.gitignore
+*.md

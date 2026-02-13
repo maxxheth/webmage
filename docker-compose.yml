@@ -1,0 +1,164 @@
+# ============================================
+# Webmage - Agentic SEO Village
+# Docker Compose Configuration
+# ============================================
+
+services:
+  # ──────────────────────────────────────────
+  # Scrapy Crawler Microservice
+  # ──────────────────────────────────────────
+  scrapy:
+    build:
+      context: ./scrapy
+      dockerfile: Dockerfile
+    container_name: webmage-scrapy
+    ports:
+      - "6800:6800"
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6800/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    profiles:
+      - onsite
+      - village
+
+  # ──────────────────────────────────────────
+  # Onsite SEO Team (Development)
+  # ──────────────────────────────────────────
+  onsite-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: webmage-onsite-dev
+    volumes:
+      - ./src:/app/src:ro
+      - ./logs:/app/logs
+      - ./output:/app/output
+      - ./.env:/app/.env:ro
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - .env
+    depends_on:
+      scrapy:
+        condition: service_healthy
+    command: ["npx", "tsx", "src/cli/run-onsite-pipeline.ts"]
+    profiles:
+      - onsite-dev
+
+  # ──────────────────────────────────────────
+  # Onsite SEO Team (Production)
+  # ──────────────────────────────────────────
+  onsite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: webmage-onsite
+    volumes:
+      - ./logs:/app/logs
+      - ./output:/app/output
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      scrapy:
+        condition: service_healthy
+    command: ["node", "dist/cli/run-onsite-pipeline.js"]
+    restart: "no"
+    profiles:
+      - onsite
+
+  # ──────────────────────────────────────────
+  # Offsite SEO / Social Media Team (Development)
+  # ──────────────────────────────────────────
+  offsite-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: webmage-offsite-dev
+    volumes:
+      - ./src:/app/src:ro
+      - ./logs:/app/logs
+      - ./output:/app/output
+      - ./.env:/app/.env:ro
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - .env
+    command: ["npx", "tsx", "src/cli/run-offsite-pipeline.ts"]
+    profiles:
+      - offsite-dev
+
+  # ──────────────────────────────────────────
+  # Offsite SEO / Social Media Team (Production)
+  # ──────────────────────────────────────────
+  offsite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: webmage-offsite
+    volumes:
+      - ./logs:/app/logs
+      - ./output:/app/output
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    command: ["node", "dist/cli/run-offsite-pipeline.js"]
+    restart: "no"
+    profiles:
+      - offsite
+
+  # ──────────────────────────────────────────
+  # Village Orchestrator (both teams concurrently)
+  # ──────────────────────────────────────────
+  village:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: webmage-village
+    volumes:
+      - ./logs:/app/logs
+      - ./output:/app/output
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      scrapy:
+        condition: service_healthy
+    restart: "no"
+    profiles:
+      - village
+
+  # ──────────────────────────────────────────
+  # Dry Run (preview mode, no writes)
+  # ──────────────────────────────────────────
+  dry-run:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: webmage-dry-run
+    volumes:
+      - ./logs:/app/logs
+      - ./output:/app/output
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    command: ["node", "dist/cli/run-village.js", "--dry-run"]
+    restart: "no"
+    profiles:
+      - dry-run
+
+volumes:
+  node_modules:
