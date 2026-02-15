@@ -1,10 +1,15 @@
 import { Logger, printSummary } from '../utils/logger.js';
 import { runOnsitePipeline } from './run-onsite-pipeline.js';
 import { runOffsitePipeline } from './run-offsite-pipeline.js';
+import { isMultisiteEnabled } from '../utils/multisiteLoader.js';
+import { runMultisite } from './run-multisite.js';
 import type { PipelineConfig, ProcessingResult } from '../types/wordpress.js';
 import * as dotenv from 'dotenv';
 
-dotenv.config();
+if (!process.env.__WEBMAGE_DOTENV_LOADED) {
+  dotenv.config();
+  process.env.__WEBMAGE_DOTENV_LOADED = '1';
+}
 
 const log = new Logger('VILLAGE');
 
@@ -21,6 +26,13 @@ function parseArgs(): PipelineConfig {
 }
 
 async function main(): Promise<void> {
+  // If multisite config is enabled, delegate entirely to the multisite runner
+  if (isMultisiteEnabled()) {
+    log.info('Multisite config detected — delegating to multisite orchestrator...');
+    await runMultisite();
+    return;
+  }
+
   const config = parseArgs();
 
   log.header('🏘️  WEBMAGE - AGENTIC SEO VILLAGE');
