@@ -20,10 +20,10 @@ output, depending on the mode.
 
 ## Mode: Replace vs. Supplement
 
-| Mode         | Behavior                                              |
-| ------------ | ----------------------------------------------------- |
-| `supplement` | Merge user data with automated output **(default)**   |
-| `replace`    | Skip the automated step; use only user-provided data  |
+| Mode         | Behavior                                             |
+| ------------ | ---------------------------------------------------- |
+| `supplement` | Merge user data with automated output **(default)**  |
+| `replace`    | Skip the automated step; use only user-provided data |
 
 ### Setting the mode
 
@@ -134,6 +134,7 @@ Target audience: homeowners in the Austin metro area.
 
 Pillar topic: Complete Guide to Home Plumbing
 Supporting topics:
+
 - How to Find a Reliable Plumber
 - Emergency Plumbing: What to Do Before Help Arrives
 - Kitchen vs Bathroom Plumbing Differences
