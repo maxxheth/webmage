@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-export type TeamName = 'ONSITE' | 'OFFSITE' | 'VILLAGE' | 'HARO';
+export type TeamName = 'ONSITE' | 'OFFSITE' | 'VILLAGE' | 'HARO' | 'MULTISITE';
 
 /**
  * Team-prefixed logger for consistent output across concurrent pipelines
