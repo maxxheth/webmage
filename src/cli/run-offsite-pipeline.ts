@@ -19,7 +19,10 @@ import {
 import type { PipelineConfig, ProcessingResult } from '../types/wordpress.js';
 import * as dotenv from 'dotenv';
 
-dotenv.config();
+if (!process.env.__WEBMAGE_DOTENV_LOADED) {
+  dotenv.config();
+  process.env.__WEBMAGE_DOTENV_LOADED = '1';
+}
 
 const log = new Logger('OFFSITE');
 
@@ -35,7 +38,10 @@ function parseArgs(): PipelineConfig {
   };
 }
 
-export async function runOffsitePipeline(configOverride?: Partial<PipelineConfig>): Promise<ProcessingResult[]> {
+export async function runOffsitePipeline(
+  configOverride?: Partial<PipelineConfig>,
+  inputDir?: string,
+): Promise<ProcessingResult[]> {
   const config = { ...parseArgs(), ...configOverride };
 
   log.header('📢 WEBMAGE - OFFSITE SEO / SOCIAL MEDIA PIPELINE');
@@ -76,7 +82,7 @@ export async function runOffsitePipeline(configOverride?: Partial<PipelineConfig
   const businessName = process.env.BUSINESS_NAME || 'Business';
 
   // Init input loader
-  const inputLoader = new InputLoader();
+  const inputLoader = new InputLoader(inputDir);
   log.divider();
   log.info('Scanning for input files...');
   inputLoader.logDiscoveredFiles('offsite');
