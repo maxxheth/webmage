@@ -1,0 +1,99 @@
+# =============================================================================
+# Webmage - Multisite Configuration
+# =============================================================================
+#
+# This file defines multiple site workflows to be processed by Webmage.
+# To enable, set SUPPORT_MULTISITE_CONFIG=true in your .env file and
+# rename this file to config.yaml (or config.yml).
+#
+# When enabled, this config OVERRIDES the .env values on a per-site basis.
+# Each site can inherit all .env values (default) and selectively override,
+# or start from scratch with inherit: false.
+#
+# Usage:
+#   npm run pipeline:multisite
+#   npm run pipeline:village        # auto-delegates when multisite is enabled
+#
+# =============================================================================
+
+# Execution mode:
+#   sequential — process one site at a time (predictable, lower resource usage)
+#   concurrent — process all sites in parallel (faster, higher resource usage)
+mode: sequential
+
+# =============================================================================
+# Sites
+# =============================================================================
+sites:
+  # ── Site 1: Main business site ──
+  - name: Main Business Site
+    # inherit: true (default) — pulls all .env values, only override what differs
+    pipelines:
+      - onsite
+      - offsite
+    # inputDir: input/        # uses the default global input/ directory
+    env:
+      WP_BASE_URL: https://main-site.com
+      WP_USERNAME: admin
+      WP_APP_PASSWORD: xxxx-xxxx-xxxx-xxxx
+      BUSINESS_NAME: Main Business
+      BUSINESS_NICHE: landscaping
+      BUSINESS_ADDRESS: "123 Main St, City, ST 12345"
+      BUSINESS_PHONE: "(555) 555-1234"
+      BUSINESS_WEBSITE: https://main-site.com
+
+  # ── Site 2: Secondary site with its own input files ──
+  - name: Secondary Blog
+    pipelines:
+      - onsite
+    inputDir: input/secondary-blog     # separate input directory for this site
+    env:
+      WP_BASE_URL: https://secondary-blog.com
+      WP_USERNAME: editor
+      WP_APP_PASSWORD: yyyy-yyyy-yyyy-yyyy
+      BUSINESS_NAME: Secondary Blog
+      BUSINESS_NICHE: gardening tips
+
+  # ── Site 3: HARO-only outreach for a client ──
+  - name: Client HARO Outreach
+    pipelines:
+      - haro
+    env:
+      BUSINESS_NAME: Client Business
+      BUSINESS_NICHE: plumbing
+      BUSINESS_WEBSITE: https://client-plumbing.com
+      IMAP_HOST: imap.gmail.com
+      IMAP_PORT: "993"
+      IMAP_USER: haro@client-plumbing.com
+      IMAP_PASSWORD: app-password-here
+      IMAP_MAILBOX: INBOX
+      HARO_MIN_RELEVANCE: "70"
+
+  # ── Site 4: Standalone — no .env inheritance ──
+  # - name: Isolated Project
+  #   inherit: false           # ONLY uses the env values listed below
+  #   pipelines:
+  #     - onsite
+  #     - offsite
+  #   inputDir: input/isolated
+  #   env:
+  #     OLLAMA_API_KEY: different-api-key
+  #     OLLAMA_MODEL: gpt-oss:120b
+  #     WP_BASE_URL: https://isolated-project.com
+  #     WP_USERNAME: admin
+  #     WP_APP_PASSWORD: zzzz-zzzz-zzzz-zzzz
+  #     BUSINESS_NAME: Isolated Project
+  #     BUSINESS_NICHE: web development
+  #     SCRAPY_URL: http://scrapy:6800
+
+  # ── Per-site pipeline config overrides ──
+  # Any site can also override pipeline behaviour:
+  #
+  # - name: Cautious Site
+  #   pipelines: [onsite]
+  #   pipelineConfig:
+  #     dryRun: true
+  #     batchSize: 3
+  #     delayBetweenRequests: 5000
+  #   env:
+  #     WP_BASE_URL: https://cautious-site.com
