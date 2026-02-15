@@ -15,7 +15,10 @@ import type { PipelineConfig, ProcessingResult } from '../types/wordpress.js';
 import type { CrawlResult, SiloPlan } from '../types/seo.js';
 import * as dotenv from 'dotenv';
 
-dotenv.config();
+if (!process.env.__WEBMAGE_DOTENV_LOADED) {
+  dotenv.config();
+  process.env.__WEBMAGE_DOTENV_LOADED = '1';
+}
 
 const log = new Logger('ONSITE');
 
@@ -32,7 +35,10 @@ function parseArgs(): PipelineConfig {
   };
 }
 
-export async function runOnsitePipeline(configOverride?: Partial<PipelineConfig>): Promise<ProcessingResult[]> {
+export async function runOnsitePipeline(
+  configOverride?: Partial<PipelineConfig>,
+  inputDir?: string,
+): Promise<ProcessingResult[]> {
   const config = { ...parseArgs(), ...configOverride };
 
   log.header('🕸️  WEBMAGE - ONSITE SEO PIPELINE');
@@ -76,7 +82,7 @@ export async function runOnsitePipeline(configOverride?: Partial<PipelineConfig>
   const location = process.env.BUSINESS_ADDRESS?.split(',').slice(-2).join(',').trim() || 'local area';
 
   // Init input loader
-  const inputLoader = new InputLoader();
+  const inputLoader = new InputLoader(inputDir);
   log.divider();
   log.info('Scanning for input files...');
   inputLoader.logDiscoveredFiles('onsite');
