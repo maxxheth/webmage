@@ -5,6 +5,10 @@ output/
 .env
 *.log
 
+# Multisite config (contains credentials — never commit)
+config.yaml
+config.yml
+
 # Input data files (user-specific, not committed)
 # Keep .gitkeep and README.md tracked
 input/onsite/*
