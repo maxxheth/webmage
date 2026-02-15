@@ -14,7 +14,10 @@ import {
 import type { PipelineConfig } from '../types/wordpress.js';
 import * as dotenv from 'dotenv';
 
-dotenv.config();
+if (!process.env.__WEBMAGE_DOTENV_LOADED) {
+  dotenv.config();
+  process.env.__WEBMAGE_DOTENV_LOADED = '1';
+}
 
 const log = new Logger('HARO');
 
@@ -30,7 +33,10 @@ function parseArgs(): PipelineConfig {
   };
 }
 
-export async function runHaroPipeline(configOverride?: Partial<PipelineConfig>): Promise<void> {
+export async function runHaroPipeline(
+  configOverride?: Partial<PipelineConfig>,
+  inputDir?: string,
+): Promise<void> {
   const config = { ...parseArgs(), ...configOverride };
 
   log.header('📰 WEBMAGE - HARO JOURNALIST OUTREACH PIPELINE');
@@ -83,7 +89,7 @@ Website: ${businessWebsite}
   log.info(`Minimum relevance threshold: ${minRelevance}/100`);
 
   // Init input loader
-  const inputLoader = new InputLoader();
+  const inputLoader = new InputLoader(inputDir);
   log.divider();
   log.info('Scanning for input files...');
   inputLoader.logDiscoveredFiles('offsite');
