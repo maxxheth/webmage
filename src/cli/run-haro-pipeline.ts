@@ -2,6 +2,7 @@ import { OllamaService } from '../services/ollamaService.js';
 import { ImapService } from '../services/imapService.js';
 import { Pipeline } from '../utils/pipeline.js';
 import { Logger } from '../utils/logger.js';
+import { InputLoader } from '../utils/inputLoader.js';
 import {
   fetchEmailsStep,
   parseQueriesStep,
@@ -81,6 +82,12 @@ Website: ${businessWebsite}
   const minRelevance = parseInt(process.env.HARO_MIN_RELEVANCE || '60', 10);
   log.info(`Minimum relevance threshold: ${minRelevance}/100`);
 
+  // Init input loader
+  const inputLoader = new InputLoader();
+  log.divider();
+  log.info('Scanning for input files...');
+  inputLoader.logDiscoveredFiles('offsite');
+
   // Run pipeline
   const pipeline = new Pipeline<string>({
     input: 'haro',
@@ -95,6 +102,7 @@ Website: ${businessWebsite}
       relevant: [],
       skipped: [],
       drafts: [],
+      inputLoader,
     } as HaroPipelineMemory,
   })
     .pipe(fetchEmailsStep)

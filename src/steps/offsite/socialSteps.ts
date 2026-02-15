@@ -5,6 +5,8 @@ import type { MakeService } from '../../services/makeService.js';
 import { SocialPostChain } from '../../chains/offsite/socialPostChain.js';
 import type { WPPost, PipelineConfig, ProcessingResult } from '../../types/wordpress.js';
 import type { SocialPostBatch } from '../../types/social.js';
+import type { InputLoader } from '../../utils/inputLoader.js';
+import { OFFSITE_INPUT_FILES } from '../../types/input.js';
 
 /**
  * Memory structure for social media pipeline
@@ -18,6 +20,7 @@ export interface SocialPipelineMemory {
   recentPosts?: WPPost[];
   batches?: SocialPostBatch[];
   results: ProcessingResult[];
+  inputLoader?: InputLoader;
 }
 
 /**
@@ -65,12 +68,24 @@ export const generateSocialPostsStep: Step<string> = async (ctx) => {
       continue;
     }
 
+    // Check for social media profile URLs from input files
+    let profileUrls: string[] | undefined;
+    const loader = memory.inputLoader;
+    if (loader?.exists('offsite', OFFSITE_INPUT_FILES.SOCIAL_MEDIA_PROFILES_TXT)) {
+      profileUrls = loader.readText('offsite', OFFSITE_INPUT_FILES.SOCIAL_MEDIA_PROFILES_TXT);
+      if (i === 0 && profileUrls.length > 0) {
+        console.log(`    ↩ Using ${profileUrls.length} social profile(s) from input/offsite/social-media-profiles.txt`);
+      }
+    }
+
     try {
       const batch = await chain.generate(
         title,
         excerpt,
         post.link,
-        memory.businessName
+        memory.businessName,
+        undefined,
+        profileUrls
       );
       batch.sourcePostId = post.id;
       batches.push(batch);

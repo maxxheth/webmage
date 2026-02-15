@@ -4,3 +4,11 @@ logs/
 output/
 .env
 *.log
+
+# Input data files (user-specific, not committed)
+# Keep .gitkeep and README.md tracked
+input/onsite/*
+input/offsite/*
+!input/onsite/.gitkeep
+!input/offsite/.gitkeep
+!input/README.md

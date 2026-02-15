@@ -2,6 +2,7 @@ import { OllamaService } from '../services/ollamaService.js';
 import { WordPressService } from '../services/wordpressService.js';
 import { Pipeline } from '../utils/pipeline.js';
 import { Logger, printSummary } from '../utils/logger.js';
+import { InputLoader } from '../utils/inputLoader.js';
 import { triggerCrawlStep, parseCrawlResultsStep, type CrawlPipelineMemory } from '../steps/onsite/crawlSteps.js';
 import { auditStep, keywordResearchStep, siloPlanStep, type PlanningPipelineMemory } from '../steps/onsite/planningSteps.js';
 import {
@@ -74,6 +75,12 @@ export async function runOnsitePipeline(configOverride?: Partial<PipelineConfig>
   const businessNiche = process.env.BUSINESS_NAME || 'local business';
   const location = process.env.BUSINESS_ADDRESS?.split(',').slice(-2).join(',').trim() || 'local area';
 
+  // Init input loader
+  const inputLoader = new InputLoader();
+  log.divider();
+  log.info('Scanning for input files...');
+  inputLoader.logDiscoveredFiles('onsite');
+
   // Phase 1: Crawl
   log.divider('═');
   log.info('PHASE 1: Site Crawl');
@@ -85,6 +92,7 @@ export async function runOnsitePipeline(configOverride?: Partial<PipelineConfig>
       scrapyUrl,
       targetUrl,
       dryRun: config.dryRun,
+      inputLoader,
     } as CrawlPipelineMemory,
   })
     .pipe(triggerCrawlStep)
@@ -113,6 +121,7 @@ export async function runOnsitePipeline(configOverride?: Partial<PipelineConfig>
       location,
       dryRun: config.dryRun,
       targetClusterCount: 5,
+      inputLoader,
     } as PlanningPipelineMemory,
   })
     .pipe(auditStep)

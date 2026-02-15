@@ -1,6 +1,8 @@
 import axios from 'axios';
 import type { Step } from '../../utils/pipeline.js';
 import type { CrawlResult } from '../../types/seo.js';
+import type { InputLoader } from '../../utils/inputLoader.js';
+import { ONSITE_INPUT_FILES } from '../../types/input.js';
 
 /**
  * Memory structure for crawl pipeline steps
@@ -10,17 +12,29 @@ export interface CrawlPipelineMemory {
   targetUrl: string;
   crawlResult?: CrawlResult;
   dryRun: boolean;
+  inputLoader?: InputLoader;
 }
 
 /**
  * Step: Trigger a full site crawl via the Scrapy microservice
  */
 export const triggerCrawlStep: Step<string> = async (ctx) => {
-  const { scrapyUrl, targetUrl, dryRun } = ctx.memory as CrawlPipelineMemory;
+  const memory = ctx.memory as CrawlPipelineMemory;
+  const { scrapyUrl, targetUrl, dryRun, inputLoader } = memory;
+
+  // Check for cached crawl data from input files
+  if (inputLoader?.exists('onsite', ONSITE_INPUT_FILES.CRAWL_DATA_JSON)) {
+    const cached = inputLoader.readJson<CrawlResult>('onsite', ONSITE_INPUT_FILES.CRAWL_DATA_JSON);
+    if (cached) {
+      console.log('  ↩ Using cached crawl data from input/onsite/crawl-data.json');
+      memory.crawlResult = cached;
+      return ctx;
+    }
+  }
 
   if (dryRun) {
     console.log(`  ⊘ [DRY RUN] Would crawl: ${targetUrl}`);
-    (ctx.memory as CrawlPipelineMemory).crawlResult = {
+    memory.crawlResult = {
       domain: new URL(targetUrl).hostname,
       crawled_at: new Date().toISOString(),
       total_pages: 0,
@@ -40,7 +54,7 @@ export const triggerCrawlStep: Step<string> = async (ctx) => {
     );
 
     const crawlResult = response.data;
-    (ctx.memory as CrawlPipelineMemory).crawlResult = crawlResult;
+    memory.crawlResult = crawlResult;
     console.log(`  ✓ Crawl complete: ${crawlResult.total_pages} pages found`);
   } catch (error) {
     if (axios.isAxiosError(error)) {

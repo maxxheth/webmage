@@ -8,6 +8,8 @@ import { HaroRelevanceScorerChain } from '../../chains/offsite/haroRelevanceScor
 import { HaroResponseDrafterChain } from '../../chains/offsite/haroResponseDrafterChain.js';
 import type { HaroEmail, HaroQuery, HaroRelevanceScore, HaroDraftResponse } from '../../types/haro.js';
 import type { PipelineConfig } from '../../types/wordpress.js';
+import type { InputLoader } from '../../utils/inputLoader.js';
+import { OFFSITE_INPUT_FILES } from '../../types/input.js';
 
 /**
  * Memory structure for the HARO pipeline
@@ -23,6 +25,7 @@ export interface HaroPipelineMemory {
   relevant: HaroRelevanceScore[];
   skipped: HaroRelevanceScore[];
   drafts: HaroDraftResponse[];
+  inputLoader?: InputLoader;
 }
 
 /**
@@ -30,6 +33,20 @@ export interface HaroPipelineMemory {
  */
 export const fetchEmailsStep: Step<string> = async (ctx) => {
   const memory = ctx.memory as HaroPipelineMemory;
+
+  // Check for offline HARO emails from input files
+  const loader = memory.inputLoader;
+  if (loader?.exists('offsite', OFFSITE_INPUT_FILES.HARO_EMAILS_JSON)) {
+    const offlineEmails = loader.readJson<HaroEmail[]>('offsite', OFFSITE_INPUT_FILES.HARO_EMAILS_JSON);
+    if (offlineEmails && offlineEmails.length > 0) {
+      console.log(`\n📬 Loaded ${offlineEmails.length} HARO email(s) from input/offsite/haro-emails.json`);
+      memory.emails = offlineEmails;
+      for (const email of memory.emails) {
+        console.log(`    • [${email.platform}] ${email.subject}`);
+      }
+      return ctx;
+    }
+  }
 
   console.log('\n📬 Fetching unread HARO emails...');
 

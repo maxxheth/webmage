@@ -36,8 +36,13 @@ export class BacklinkProspectorChain {
     businessName: string,
     businessWebsite: string,
     businessNiche: string,
-    templateCount = 4
+    templateCount = 4,
+    targetUrls?: string[]
   ): Promise<OutreachTemplate[]> {
+    const targetSection = targetUrls && targetUrls.length > 0
+      ? `\n\n## Specific Target Sites\nUse these actual URLs as outreach targets instead of generic placeholders:\n${targetUrls.map(u => `- ${u}`).join('\n')}`
+      : '';
+
     const prompt = `Generate ${templateCount} backlink outreach email templates for a ${businessNiche} business.
 
 ## Business
@@ -46,7 +51,7 @@ export class BacklinkProspectorChain {
 - Niche: ${businessNiche}
 
 ## Content Topics Available for Pitching
-${contentTopics.map(t => `- ${t}`).join('\n')}
+${contentTopics.map(t => `- ${t}`).join('\n')}${targetSection}
 
 ## Requirements
 Generate ${templateCount} outreach templates, mixing these strategies:

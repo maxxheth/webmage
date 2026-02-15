@@ -6,6 +6,8 @@ import { CitationBuilderChain } from '../../chains/offsite/citationBuilderChain.
 import { BacklinkProspectorChain } from '../../chains/offsite/backlinkProspectorChain.js';
 import type { CitationPackage, OutreachTemplate } from '../../types/social.js';
 import type { PipelineConfig } from '../../types/wordpress.js';
+import type { InputLoader } from '../../utils/inputLoader.js';
+import { OFFSITE_INPUT_FILES } from '../../types/input.js';
 
 /**
  * Memory structure for citation/backlink pipeline
@@ -21,6 +23,7 @@ export interface CitationPipelineMemory {
   contentTopics: string[];
   citations?: CitationPackage[];
   outreach?: OutreachTemplate[];
+  inputLoader?: InputLoader;
 }
 
 /**
@@ -30,6 +33,23 @@ export const generateCitationPackagesStep: Step<string> = async (ctx) => {
   const memory = ctx.memory as CitationPipelineMemory;
 
   console.log('  → Generating citation packages...');
+
+  // Check for user-provided citation overrides
+  const loader = memory.inputLoader;
+  if (loader?.exists('offsite', OFFSITE_INPUT_FILES.CITATION_OVERRIDES_JSON)) {
+    const userCitations = loader.readJson<CitationPackage[]>('offsite', OFFSITE_INPUT_FILES.CITATION_OVERRIDES_JSON);
+    const mode = loader.getMode('offsite', OFFSITE_INPUT_FILES.CITATION_OVERRIDES_JSON);
+
+    if (userCitations) {
+      console.log(`  ↩ Loaded ${userCitations.length} citation(s) from input/offsite/citation-overrides.json [${mode}]`);
+
+      if (mode === 'replace') {
+        memory.citations = userCitations;
+        console.log(`  ✓ Using ${memory.citations.length} user-provided citations (replace mode)`);
+        return ctx;
+      }
+    }
+  }
 
   if (memory.config.dryRun) {
     console.log('  ⊘ [DRY RUN] Would generate citation packages');
@@ -45,6 +65,18 @@ export const generateCitationPackagesStep: Step<string> = async (ctx) => {
     memory.businessNiche
   );
 
+  // Supplement mode: merge user citations
+  if (loader?.exists('offsite', OFFSITE_INPUT_FILES.CITATION_OVERRIDES_JSON)) {
+    const userCitations = loader.readJson<CitationPackage[]>('offsite', OFFSITE_INPUT_FILES.CITATION_OVERRIDES_JSON);
+    const mode = loader.getMode('offsite', OFFSITE_INPUT_FILES.CITATION_OVERRIDES_JSON);
+    if (userCitations && mode === 'supplement') {
+      const existingUrls = new Set(memory.citations.map(c => c.directoryUrl.toLowerCase()));
+      const newCitations = userCitations.filter(c => !existingUrls.has(c.directoryUrl.toLowerCase()));
+      memory.citations.push(...newCitations);
+      console.log(`  ✓ Merged ${newCitations.length} additional user-provided citation(s)`);
+    }
+  }
+
   console.log(`  ✓ Generated ${memory.citations.length} citation packages`);
   return ctx;
 };
@@ -57,6 +89,35 @@ export const generateOutreachStep: Step<string> = async (ctx) => {
 
   console.log('  → Generating outreach templates...');
 
+  // Check for user-provided content topics
+  const loader = memory.inputLoader;
+  if (loader?.exists('offsite', OFFSITE_INPUT_FILES.CONTENT_TOPICS_TXT)) {
+    const userTopics = loader.readText('offsite', OFFSITE_INPUT_FILES.CONTENT_TOPICS_TXT);
+    const mode = loader.getMode('offsite', OFFSITE_INPUT_FILES.CONTENT_TOPICS_TXT);
+
+    if (userTopics.length > 0) {
+      console.log(`  ↩ Loaded ${userTopics.length} content topic(s) from input/offsite/content-topics.txt [${mode}]`);
+      if (mode === 'replace') {
+        memory.contentTopics = userTopics;
+      } else {
+        // Supplement: add user topics that aren't already present
+        const existing = new Set(memory.contentTopics.map(t => t.toLowerCase()));
+        const newTopics = userTopics.filter(t => !existing.has(t.toLowerCase()));
+        memory.contentTopics.push(...newTopics);
+        console.log(`  ✓ Merged ${newTopics.length} additional topic(s)`);
+      }
+    }
+  }
+
+  // Check for outreach target URLs
+  let targetUrls: string[] | undefined;
+  if (loader?.exists('offsite', OFFSITE_INPUT_FILES.OUTREACH_TARGETS_TXT)) {
+    targetUrls = loader.readText('offsite', OFFSITE_INPUT_FILES.OUTREACH_TARGETS_TXT);
+    if (targetUrls.length > 0) {
+      console.log(`  ↩ Loaded ${targetUrls.length} outreach target(s) from input/offsite/outreach-targets.txt`);
+    }
+  }
+
   if (memory.config.dryRun) {
     console.log('  ⊘ [DRY RUN] Would generate outreach templates');
     return ctx;
@@ -67,7 +128,9 @@ export const generateOutreachStep: Step<string> = async (ctx) => {
     memory.contentTopics,
     memory.businessName,
     memory.businessWebsite,
-    memory.businessNiche
+    memory.businessNiche,
+    undefined,
+    targetUrls
   );
 
   console.log(`  ✓ Generated ${memory.outreach.length} outreach templates`);

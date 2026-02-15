@@ -3,6 +3,7 @@ import { WordPressService } from '../services/wordpressService.js';
 import { MakeService } from '../services/makeService.js';
 import { Pipeline } from '../utils/pipeline.js';
 import { Logger, printSummary } from '../utils/logger.js';
+import { InputLoader } from '../utils/inputLoader.js';
 import {
   fetchPublishedContentStep,
   generateSocialPostsStep,
@@ -74,6 +75,12 @@ export async function runOffsitePipeline(configOverride?: Partial<PipelineConfig
   const allResults: ProcessingResult[] = [];
   const businessName = process.env.BUSINESS_NAME || 'Business';
 
+  // Init input loader
+  const inputLoader = new InputLoader();
+  log.divider();
+  log.info('Scanning for input files...');
+  inputLoader.logDiscoveredFiles('offsite');
+
   // ─── Social Media Pipeline ───
   log.divider('═');
   log.info('PHASE 1: Social Media Content');
@@ -100,6 +107,7 @@ export async function runOffsitePipeline(configOverride?: Partial<PipelineConfig
       config,
       businessName,
       results: [],
+      inputLoader,
     } as SocialPipelineMemory,
   })
     .pipe(fetchPublishedContentStep)
@@ -143,6 +151,7 @@ export async function runOffsitePipeline(configOverride?: Partial<PipelineConfig
       businessWebsite,
       businessNiche,
       contentTopics,
+      inputLoader,
     } as CitationPipelineMemory,
   })
     .pipe(generateCitationPackagesStep)

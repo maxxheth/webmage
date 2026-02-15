@@ -36,8 +36,13 @@ export class SocialPostChain {
     postExcerpt: string,
     postUrl: string,
     businessName: string,
-    platforms: SocialPost['platform'][] = ['twitter', 'facebook', 'linkedin', 'instagram']
+    platforms: SocialPost['platform'][] = ['twitter', 'facebook', 'linkedin', 'instagram'],
+    profileUrls?: string[]
   ): Promise<SocialPostBatch> {
+    const profileSection = profileUrls && profileUrls.length > 0
+      ? `\n\n## Target Social Profiles\n${profileUrls.map(u => `- ${u}`).join('\n')}\nTailor posts to match the tone and audience of these specific profiles.`
+      : '';
+
     const prompt = `Create social media posts to promote this blog post.
 
 ## Blog Post
@@ -47,7 +52,7 @@ export class SocialPostChain {
 - Business: ${businessName}
 
 ## Required Platforms
-${platforms.map(p => `- ${p}`).join('\n')}
+${platforms.map(p => `- ${p}`).join('\n')}${profileSection}
 
 ## Requirements
 For each platform, generate:
